@@ -57,8 +57,29 @@ def cotacaoDolar(str):
 
 
 
-#df = pd.read_csv('termicas-nome_num_tipo_preco_pot.csv',sep=',')
+df = pd.read_csv('termicas-nome_num_tipo_preco_pot.csv',sep=',')
+
+#print(df)
 
 #print(df["date"].apply(type))
+
+dados = df.drop_duplicates(subset="num",keep="last")
+dados = dados.groupby(["tipo_comb_"])       #dataset group com o numero de usinas para cada tipo de combustivel
+
+#for x in dados.groups:
+#    print(x)
+#    print(dados.groups[x])
+
+
+potencias = df.drop_duplicates(subset="num",keep="last").groupby(["tipo_comb_"]).sum().sort_values(by="pot",ascending=False) #dataframe com a soma das potencias instaladas por tipo de combustivel em ordem decrescente.
+principaisCombustiveis = []
+
+for i in range(0,3):
+    principaisCombustiveis.append(potencias.iloc[i].name)
+
+print(principaisCombustiveis)
+
+
+#print(dados.size().sort_values().to_frame())
 
 #df.to_csv(path_or_buf="teste.csv")
