@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from datetime import datetime
+from pandas.core.frame import DataFrame
 import requests
 
 
@@ -39,9 +40,6 @@ def valorDolar(dia=1, mes=1, ano=2001):
         requisicao = requests.get("https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/CotacaoDolarDia(dataCotacao=@dataCotacao)?@dataCotacao='"+strmes+"-"+strdia+"-"+strano+"'&$top=1&$format=json")
 
         cotacao = requisicao.json()
-
-    print(cotacao)
-    print (cotacao["value"][0])
     cot = (cotacao["value"][0]["cotacaoCompra"]+cotacao["value"][0]["cotacaoVenda"])/2
     
     return cot
@@ -70,7 +68,7 @@ for i in range(0,3):
     combustiveis.append(potencias.iloc[i].name)
 
 print(combustiveis)
-usinas = {}
+usinas = {}     #['Gas', 'Oleo', 'Carvao']
 
 for i in combustiveis:
     lista = []
@@ -79,6 +77,33 @@ for i in combustiveis:
     usinas[i] = lista
 
 print(usinas)
+
+for i in usinas:
+    print("\n\n\ncombustivel:"+i)
+    df_usina = []
+    for j in usinas[i]:
+        print("\n")
+        print(j)
+        print("\n")
+        custo = df.loc[df["tipo_comb_"]==i].loc[df["num"]==j]["custo1"]
+        custo = custo.to_frame()
+        print("\n\n\nsolicitando dolar\n\n\n")
+        result = df.loc[df["tipo_comb_"]==i].loc[df["num"]==j]["date"].apply(func=cotacaoDolar)
+        print("\n\n\ndolar recebido \n\n\n")
+        custo.insert(loc=1,column="dolar",value=result)
+        csv = "custo "+i+" usina "+str(j)+"Xdolar.csv"
+        #print(csv)
+        #custo.to_csv(path_or_buf=csv, index = False)
+        df_usina.append(custo)
+
+    df_comb = pd.concat(df_usina, ignore_index=True)
+    print(df_comb)
+    csv = "custo "+i+"Xdolar.csv"
+    df_comb.to_csv(path_or_buf=csv, index = False)
+    break
+        
+        
+        
 
 
 #df.to_csv(path_or_buf="teste.csv")
