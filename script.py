@@ -59,27 +59,26 @@ def cotacaoDolar(str):
 
 df = pd.read_csv('termicas-nome_num_tipo_preco_pot.csv',sep=',')
 
-#print(df)
-
-#print(df["date"].apply(type))
-
-dados = df.drop_duplicates(subset="num",keep="last")
-dados = dados.groupby(["tipo_comb_"])       #dataset group com o numero de usinas para cada tipo de combustivel
-
-#for x in dados.groups:
-#    print(x)
-#    print(dados.groups[x])
-
+num = df.drop_duplicates(subset="num",keep="last").groupby(["tipo_comb_"]).size().sort_values()       #dataset group com o numero de usinas para cada tipo de combustivel
 
 potencias = df.drop_duplicates(subset="num",keep="last").groupby(["tipo_comb_"]).sum().sort_values(by="pot",ascending=False) #dataframe com a soma das potencias instaladas por tipo de combustivel em ordem decrescente.
-principaisCombustiveis = []
+
+
+combustiveis = []
 
 for i in range(0,3):
-    principaisCombustiveis.append(potencias.iloc[i].name)
+    combustiveis.append(potencias.iloc[i].name)
 
-print(principaisCombustiveis)
+print(combustiveis)
+usinas = {}
 
+for i in combustiveis:
+    lista = []
+    for j in range(0,3):
+        lista.append(df.loc[df["tipo_comb_"]==i].drop_duplicates(subset="num",keep="last").sort_values(by="pot",ascending=False).iloc[j]["num"])
+    usinas[i] = lista
 
-#print(dados.size().sort_values().to_frame())
+print(usinas)
+
 
 #df.to_csv(path_or_buf="teste.csv")
