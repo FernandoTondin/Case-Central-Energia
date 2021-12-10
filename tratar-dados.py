@@ -8,6 +8,34 @@ import investpy as inv
 def strTodate(str):
     return datetime.strptime(str, "%Y-%m-%d %H:%M:%S")
 
+def mesTostr(mes):
+    if mes == 1:
+        return "Jan"
+    if mes == 2:
+        return "Feb"
+    if mes == 3:
+        return "Mar"
+    if mes == 4:
+        return "Apr"
+    if mes == 5:
+        return "May"
+    if mes == 6:
+        return "Jun"
+    if mes == 7:
+        return "Jul"
+    if mes == 8:
+        return "Aug"
+    if mes == 9:
+        return "Sep"
+    if mes == 10:
+        return "Oct"
+    if mes == 11:
+        return "Nov"
+    if mes == 12:
+        return "Dec"
+    
+    return "Jan"
+
 def cotacaoDolar(string):
     data = datetime.strptime(string, "%Y-%m-%d %H:%M:%S")
     dia=data.day
@@ -82,31 +110,24 @@ def precoGas(string):
 
 def precoCarvao(string):
     data = datetime.strptime(string, "%Y-%m-%d %H:%M:%S")
-    dia=1
-    mes=data.month
-    ano=data.year
-
-    strdia = str(dia).zfill(2)
-    strmes = str(mes).zfill(2)
-    strano = str(ano).zfill(4)
-    strdata = strano+"/"+strmes+"/"+strdia
+    mes = data.month
+    ano = data.year
+    strano = str(data.year).zfill(4)
+    strdata = mesTostr(mes)+" "+strano
 
     
-    df = pd.read_excel("preco-carvao-mineral.xls")
-    
-    cotacao = df.loc[df["Month"] == strdata]
+    cotacao = carvao.loc[carvao["Month"] == strdata]["Price"]
 
     while cotacao.empty:
         mes = mes - 1
         if mes < 1:
             ano = ano - 1
             mes = 12
-        strmes = str(mes).zfill(2)
         strano = str(ano).zfill(4)
-        strdata = strano+"/"+strmes+"/"+strdia
-        cotacao = df.loc[df["Month"] == strdata]
-
-    cot = cotacao["Price"]
+        strdata = mesTostr(mes)+" "+strano
+        cotacao = carvao.loc[carvao["Month"] == strdata]["Price"]
+    cot = cotacao
+    return float(cot)
 
 
 df = pd.read_csv('termicas-nome_num_tipo_preco_pot.csv',sep=',')
@@ -144,8 +165,8 @@ for i in usinas:
         strano = str(fim.year).zfill(4)
         strdatafim = strdia+"/"+strmes+"/"+strano
 
-        oleo = inv.get_commodity_historical_data(commodity="Brent Oil",from_date=strdataini,to_date=strdatafim,order='descending',as_json=True)
-        gas = inv.get_commodity_historical_data(commodity="Natural Gas",from_date=strdataini,to_date=strdatafim,order='descending',as_json=True)
+        
+        
 
         result = df.loc[df["tipo_comb_"]==i].loc[df["num"]==j]["date"].apply(func=cotacaoDolar)
         custo.insert(loc=1,column="dolar",value=result)
@@ -153,18 +174,21 @@ for i in usinas:
         custo.to_csv(path_or_buf=csv, index = False)
         custo = df.loc[df["tipo_comb_"]==i].loc[df["num"]==j]["custo1"].to_frame()
         if i == "Oleo":
+            oleo = inv.get_commodity_historical_data(commodity="Brent Oil",from_date=strdataini,to_date=strdatafim,order='descending',as_json=True)
             result = df.loc[df["tipo_comb_"]==i].loc[df["num"]==j]["date"].apply(func=precoPetroleo)
-            custo.insert(loc=1,column="Petroleo",value=result)
+            custo.insert(loc=1,column="petroleo",value=result)
             csv = "custo-usina-"+str(j)+"-"+i+"Xpetroleo.csv"
             custo.to_csv(path_or_buf=csv, index = False)
         elif i == "Gas":
+            gas = inv.get_commodity_historical_data(commodity="Natural Gas",from_date=strdataini,to_date=strdatafim,order='descending',as_json=True)
             result = df.loc[df["tipo_comb_"]==i].loc[df["num"]==j]["date"].apply(func=precoGas)
-            custo.insert(loc=1,column="Gas natural",value=result)
+            custo.insert(loc=1,column="gas",value=result)
             csv = "custo-usina-"+str(j)+"-"+i+"Xgas-natural.csv"
             custo.to_csv(path_or_buf=csv, index = False)
         elif i == "Carvao":
+            carvao = pd.read_html("https://www.indexmundi.com/commodities/?commodity=coal-australian&months=120")[1]
             result = df.loc[df["tipo_comb_"]==i].loc[df["num"]==j]["date"].apply(func=precoCarvao)
-            custo.insert(loc=1,column="Carvao",value=result)
+            custo.insert(loc=1,column="carvao",value=result)
             csv = "custo-usina-"+str(j)+"-"+i+"Xcarvao-mineral.csv"
             custo.to_csv(path_or_buf=csv, index = False)
 
